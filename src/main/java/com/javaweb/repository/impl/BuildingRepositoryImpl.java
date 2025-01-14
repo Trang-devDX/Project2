@@ -6,12 +6,16 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.util.NumberUtils;
 
 import com.javaweb.model.BuildingDTO;
 import com.javaweb.repository.BuildingRepository;
 import com.javaweb.repository.entity.BuildingEntity;
+import com.javaweb.utils.NumberUtil;
+import com.javaweb.utils.StringUtil;
 
 @Repository
 public class BuildingRepositoryImpl implements BuildingRepository {
@@ -19,15 +23,79 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     private static final String USER = "root"; 
     private static final String PASSWORD = "27032003";     
     
+    public static void joinTable(Map<String, Object> params, List<String> typeCode, StringBuilder sql) {
+    	String staffId = (String)params.get("staffId");
+    	if(StringUtil.checkString(staffId) == true) {
+    		sql.append(" INNER JOIN assignmentbuilding ON b.id = assignmentbuilding.buildingid ");
+    	}
+    	
+    	String areaFrom = (String)params.get("areaFrom");
+    	String areaTo = (String)params.get("areaTo");
+    	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
+    		sql.append(" INNER JOIN rentarea ON b.id = rentarea.buildingid ");
+    	}
+
+    	if(typeCode != null && typeCode.size() != 0) {
+    		sql.append("");
+    	}
+    }
+    
+    // function common query k cần join
+    public static void queryNormal(Map<String, Object> params, StringBuilder where) {
+    	for(Map.Entry<String, Object> item : params.entrySet()) {
+    		if(!item.getKey().equals("staffId") && !item.getKey().equals("typeCode") && !item.getKey().startsWith("area")) {
+    			String value = item.getValue().toString();
+    			if(NumberUtil.isNumber(value) == true) {
+    				where.append(" AND b." + item.getKey() + " = " + value);
+    			}else {
+    				where.append(" AND b." + item.getKey() + " LIKE '%" + item.getValue() + "%'");
+    			}
+    		}
+    	}
+    }
+    // function common query cần phải join với bảng khác
+    public static void querySpecial(Map<String, Object> params, List<String> typeCode, StringBuilder where) {
+    	String staffId = (String)params.get("staffId");
+    	if(StringUtil.checkString(staffId) == true) {
+    		where.append(" AND assignmentbuilding.staffid = " + staffId);
+    	}
+    	String areaFrom = (String)params.get("areFrom");
+    	String areaTo =(String)params.get("areaTo");
+    	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
+    		if(StringUtil.checkString(areaFrom) == true) {
+    			where.append(" AND rentarea.value >= " + areaFrom);
+    		}
+    		if(StringUtil.checkString(areaTo) == true) {
+    			where.append(" AND rentarea.value <= " + areaTo);
+    		}
+    	}
+    	String rentPriceFrom = (String)params.get("rentPriceFrom");
+    	String rentPriceTo = (String)params.get("rentPriceTo");
+    	if(StringUtil.checkString(rentPriceFrom) == true || StringUtil.checkString(rentPriceTo) == true) {
+    		if(StringUtil.checkString(rentPriceFrom) == true) {
+    			where.append(" AND b.rentprice >= " + rentPriceFrom);
+    		}
+    		if(StringUtil.checkString(rentPriceTo) == true) {
+    			where.append(" AND b.rentprice <= " + rentPriceTo);
+    		}
+    	}
+    	if(typeCode != null && typeCode.size() != 0) {
+    		where.append(" AND b.code IN(" + String.join(",", typeCode) + ")");
+    	}
+
+    }
+    
 	@Override
-	public List<BuildingEntity> findAll(String name, String districtId) {
-		StringBuilder sql = new StringBuilder("SELECT * FROM building b WHERE 1=1 ");
-		if(name != null && !name.equals("")) {
-			sql.append("AND b.name LIKE '%" + name + "%' ");
-		}
-		if(districtId != null && !districtId.equals("")) {
-			sql.append("AND b.district LIKE '%" + districtId + "%' ");
-		}
+	public List<BuildingEntity> findAll(Map<String, Object> params, List<String> typeCode) {
+		// SELECT
+		StringBuilder sql = new StringBuilder("SELECT b.id, b.name, b.street, b.ward, b.district, b.numberofbasement, b.floorarea, b.rentprice, b.type, b.managername, b.managerphone FROM building b WHERE 1=1 ");
+		// JOIN
+		joinTable(params, typeCode, sql);
+		// WHERE
+		StringBuilder where = new StringBuilder("1=1");		
+		queryNormal(params, where);
+		querySpecial(params, typeCode, where);		
+		sql.append(where);
         List<BuildingEntity> result = new ArrayList<>();
         
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);

@@ -1,6 +1,7 @@
 package com.javaweb.api;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,13 +17,11 @@ public class BuildingAPI {
 	private BuildingService buildingService;
 	
 	@GetMapping(value = "/api/building")
-	public List<BuildingDTO> getBuilding(@RequestParam(name="name") String name,
-										 @RequestParam(name="districtid") String district,
-										 @RequestParam(name="typeCode") List<String> typeCode2) {
-		List<BuildingDTO> result = buildingService.findAll(name, district);
+	public List<BuildingDTO> getBuilding(@RequestParam Map<String, Object> params,
+										 @RequestParam(name="typeCode", required = false) List<String> typeCode) {
+		List<BuildingDTO> result = buildingService.findAll(params, typeCode);
 		return result;
 	}
-	
 	
 
 }
