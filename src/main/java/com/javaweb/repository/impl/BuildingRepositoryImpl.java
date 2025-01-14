@@ -34,23 +34,26 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
     		sql.append(" INNER JOIN rentarea ON b.id = rentarea.buildingid ");
     	}
-
-    	if(typeCode != null && typeCode.size() != 0) {
-    		sql.append("");
-    	}
     }
     
     // function common query k cần join
-    public static void queryNormal(Map<String, Object> params, StringBuilder where) {
+    public static void queryNormal(Map<String, Object> params, List<String> typeCode, StringBuilder where) {
     	for(Map.Entry<String, Object> item : params.entrySet()) {
-    		if(!item.getKey().equals("staffId") && !item.getKey().equals("typeCode") && !item.getKey().startsWith("area")) {
+    		if(!item.getKey().equals("staffId") && !item.getKey().startsWith("area") && !item.getKey().startsWith("rentPrice") && !item.getKey().equals("typeCode")) {
     			String value = item.getValue().toString();
     			if(NumberUtil.isNumber(value) == true) {
     				where.append(" AND b." + item.getKey() + " = " + value);
     			}else {
-    				where.append(" AND b." + item.getKey() + " LIKE '%" + item.getValue() + "%'");
+    				where.append(" AND b." + item.getKey() + " LIKE '%" + item.getValue() + "%' ");
     			}
     		}
+    	}
+    	if(typeCode != null && typeCode.size() != 0) {
+    		List<String> listCode  = new ArrayList<String>();
+    		for(String item : typeCode) {
+    			listCode.add("'" + item + "'");
+    		}
+    		where.append(" AND b.type IN(" + String.join(",", listCode) + ")" );
     	}
     }
     // function common query cần phải join với bảng khác
@@ -59,7 +62,7 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     	if(StringUtil.checkString(staffId) == true) {
     		where.append(" AND assignmentbuilding.staffid = " + staffId);
     	}
-    	String areaFrom = (String)params.get("areFrom");
+    	String areaFrom = (String)params.get("areaFrom");
     	String areaTo =(String)params.get("areaTo");
     	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
     		if(StringUtil.checkString(areaFrom) == true) {
@@ -79,23 +82,22 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     			where.append(" AND b.rentprice <= " + rentPriceTo);
     		}
     	}
-    	if(typeCode != null && typeCode.size() != 0) {
-    		where.append(" AND b.code IN(" + String.join(",", typeCode) + ")");
-    	}
-
     }
     
 	@Override
 	public List<BuildingEntity> findAll(Map<String, Object> params, List<String> typeCode) {
 		// SELECT
-		StringBuilder sql = new StringBuilder("SELECT b.id, b.name, b.street, b.ward, b.district, b.numberofbasement, b.floorarea, b.rentprice, b.type, b.managername, b.managerphone FROM building b WHERE 1=1 ");
+		StringBuilder sql = new StringBuilder("SELECT b.id, b.name, b.street, b.ward, b.district, b.numberofbasement, b.floorarea, b.rentprice, b.type, b.managername, b.managerphone FROM building b ");
 		// JOIN
 		joinTable(params, typeCode, sql);
 		// WHERE
-		StringBuilder where = new StringBuilder("1=1");		
-		queryNormal(params, where);
-		querySpecial(params, typeCode, where);		
-		sql.append(where);
+		StringBuilder where = new StringBuilder(" WHERE 1=1 ");		
+		queryNormal(params, typeCode, where);
+		querySpecial(params, typeCode, where);	
+		// where.append(" GROUP BY b.id");
+		sql.append(" ").append(where);
+		
+		
         List<BuildingEntity> result = new ArrayList<>();
         
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
@@ -105,9 +107,13 @@ public class BuildingRepositoryImpl implements BuildingRepository {
             while (rs.next()) {
             	BuildingEntity building = new BuildingEntity();
                 building.setName(rs.getString("name"));
-                building.setNumberOfBasement(rs.getInt("numberofbasement"));
+                building.setDistrict(rs.getString("district"));
                 building.setWard(rs.getString("ward"));
                 building.setStreet(rs.getString("street"));
+                building.setNumberOfBasement(rs.getInt("numberofbasement"));
+                building.setFloorarea(rs.getInt("floorarea"));
+                building.setRentprice(rs.getInt("rentprice"));
+                building.setType(rs.getString("type"));
                 result.add(building);            
             }
         } catch (Exception e) {
