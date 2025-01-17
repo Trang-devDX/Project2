@@ -48,13 +48,13 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     			}
     		}
     	}
-    	if(typeCode != null && typeCode.size() != 0) {
-    		List<String> listCode  = new ArrayList<String>();
-    		for(String item : typeCode) {
-    			listCode.add("'" + item + "'");
-    		}
-    		where.append(" AND b.type IN(" + String.join(",", listCode) + ")" );
-    	}
+    	if (typeCode != null && !typeCode.isEmpty()) {
+            List<String> listCode = new ArrayList<>();
+            for (String item : typeCode) {
+                listCode.add("'" + item + "'");
+                where.append(" AND b.type LIKE '%" + item + "%' ");
+            }
+        }
     }
     // function common query cần phải join với bảng khác
     public static void querySpecial(Map<String, Object> params, List<String> typeCode, StringBuilder where) {
@@ -87,14 +87,13 @@ public class BuildingRepositoryImpl implements BuildingRepository {
 	@Override
 	public List<BuildingEntity> findAll(Map<String, Object> params, List<String> typeCode) {
 		// SELECT
-		StringBuilder sql = new StringBuilder("SELECT b.id, b.name, b.street, b.ward, b.district, b.numberofbasement, b.floorarea, b.rentprice, b.type, b.managername, b.managerphone FROM building b ");
+		StringBuilder sql = new StringBuilder("SELECT * FROM building b ");
 		// JOIN
 		joinTable(params, typeCode, sql);
 		// WHERE
 		StringBuilder where = new StringBuilder(" WHERE 1=1 ");		
 		queryNormal(params, typeCode, where);
 		querySpecial(params, typeCode, where);	
-		// where.append(" GROUP BY b.id");
 		sql.append(" ").append(where);
 		
 		
@@ -106,14 +105,41 @@ public class BuildingRepositoryImpl implements BuildingRepository {
             
             while (rs.next()) {
             	BuildingEntity building = new BuildingEntity();
-                building.setName(rs.getString("name"));
-                building.setDistrict(rs.getString("district"));
-                building.setWard(rs.getString("ward"));
-                building.setStreet(rs.getString("street"));
-                building.setNumberOfBasement(rs.getInt("numberofbasement"));
-                building.setFloorarea(rs.getInt("floorarea"));
-                building.setRentprice(rs.getInt("rentprice"));
-                building.setType(rs.getString("type"));
+            	building.setId(rs.getLong("id"));
+            	building.setName(rs.getString("name"));
+            	building.setStreet(rs.getString("street"));
+            	building.setWard(rs.getString("ward"));
+            	building.setDistrict(rs.getString("district"));
+            	building.setStructure(rs.getString("structure"));
+            	building.setNumberOfBasement(rs.getLong("numberofbasement"));
+            	building.setFloorarea(rs.getLong("floorarea"));
+            	building.setDirection(rs.getString("direction"));
+            	building.setLevel(rs.getString("level"));
+            	building.setRentprice(rs.getLong("rentprice"));
+            	building.setRentpricedescription(rs.getString("rentpricedescription"));
+            	building.setServicefee(rs.getString("servicefee"));
+            	building.setCarfee(rs.getString("carfee"));
+            	building.setMotofee(rs.getString("motofee"));
+            	building.setOvertimefee(rs.getString("overtimefee"));
+            	building.setWaterfee(rs.getString("waterfee"));
+            	building.setElectricityfee(rs.getString("electricityfee"));
+            	building.setDeposit(rs.getString("deposit"));
+            	building.setPayment(rs.getString("payment"));
+            	building.setRenttime(rs.getString("renttime"));
+            	building.setDecorationtime(rs.getString("decorationtime"));
+            	building.setBrokeragefee(rs.getDouble("brokeragefee"));
+            	building.setType(rs.getString("type"));
+            	building.setNote(rs.getString("note"));
+            	building.setLinkofbuilding(rs.getString("linkofbuilding"));
+            	building.setMap(rs.getString("map"));
+            	building.setAvatar(rs.getString("avatar"));
+            	building.setCreateddate(rs.getDate("createddate"));
+            	building.setModifieddate(rs.getDate("modifieddate"));
+            	building.setCreatedby(rs.getString("createdby"));
+            	building.setModifiedby(rs.getString("modifiedby"));
+            	building.setManagername(rs.getString("managername"));
+            	building.setManagerphone(rs.getString("managerphone"));
+                
                 result.add(building);            
             }
         } catch (Exception e) {
