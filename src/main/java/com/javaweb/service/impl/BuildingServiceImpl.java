@@ -22,6 +22,8 @@ public class BuildingServiceImpl implements BuildingService {
 	@Autowired
 	private BuildingRepository buildingRepository;
 	
+	
+	
 	@Autowired
 	private BuildingDTOConverter buildingDTOConverter;
 	
@@ -31,7 +33,8 @@ public class BuildingServiceImpl implements BuildingService {
 		List<BuildingEntity> buildingEntitites = buildingRepository.findAll(params, typeCode);
 		List<BuildingDTO> result = new ArrayList<BuildingDTO>();
 		for(BuildingEntity item : buildingEntitites) {
-			BuildingDTO building = buildingDTOConverter.toBuildingDTO(item);			
+			BuildingDTO building = buildingDTOConverter.toBuildingDTO(item);
+			
 			result.add(building);
 		}
 		return result;
