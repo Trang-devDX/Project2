@@ -29,11 +29,11 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     		sql.append(" INNER JOIN assignmentbuilding ON b.id = assignmentbuilding.buildingid ");
     	}
     	
-    	String areaFrom = (String)params.get("areaFrom");
-    	String areaTo = (String)params.get("areaTo");
-    	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
-    		sql.append(" INNER JOIN rentarea ON b.id = rentarea.buildingid ");
-    	}
+//    	String areaFrom = (String)params.get("areaFrom");
+//    	String areaTo = (String)params.get("areaTo");
+//    	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
+//    		sql.append(" INNER JOIN rentarea ON b.id = rentarea.buildingid ");
+//    	}
     }
     
     // function common query k cần join
@@ -49,9 +49,7 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     		}
     	}
     	if (typeCode != null && !typeCode.isEmpty()) {
-            List<String> listCode = new ArrayList<>();
             for (String item : typeCode) {
-                listCode.add("'" + item + "'");
                 where.append(" AND b.type LIKE '%" + item + "%' ");
             }
         }
@@ -65,12 +63,15 @@ public class BuildingRepositoryImpl implements BuildingRepository {
     	String areaFrom = (String)params.get("areaFrom");
     	String areaTo =(String)params.get("areaTo");
     	if(StringUtil.checkString(areaFrom) == true || StringUtil.checkString(areaTo) == true) {
+    		where.append(" AND EXISTS ( SELECT * FROM rentarea WHERE b.id = rentarea.buildingid ");
     		if(StringUtil.checkString(areaFrom) == true) {
     			where.append(" AND rentarea.value >= " + areaFrom);
     		}
     		if(StringUtil.checkString(areaTo) == true) {
     			where.append(" AND rentarea.value <= " + areaTo);
     		}
+    		where.append(" ) ");
+    		
     	}
     	String rentPriceFrom = (String)params.get("rentPriceFrom");
     	String rentPriceTo = (String)params.get("rentPriceTo");
