@@ -20,16 +20,18 @@ import com.javaweb.service.BuildingService;
 @Service
 public class BuildingServiceImpl implements BuildingService {
 	@Autowired
-	private BuildingRepository buildingRepository;
-	
-	
+	private BuildingRepository buildingRepository;	
 	
 	@Autowired
 	private BuildingDTOConverter buildingDTOConverter;
 	
+	@Autowired
+	
+	
 	@Override
 	public List<BuildingDTO> findAll(Map<String, Object> params, List<String> typeCode) {
 		// TODO Auto-generated method stub
+		
 		List<BuildingEntity> buildingEntitites = buildingRepository.findAll(params, typeCode);
 		List<BuildingDTO> result = new ArrayList<BuildingDTO>();
 		for(BuildingEntity item : buildingEntitites) {
